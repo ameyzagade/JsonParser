@@ -16,10 +16,7 @@ public sealed class Executor
             return 1;
         }
 
-        var jsonFilePath = Path.IsPathFullyQualified(argument)
-            ? argument
-            : Path.Combine(Directory.GetCurrentDirectory(), argument);
-
+        var jsonFilePath = GetJsonFilePath(argument);
         if (!File.Exists(jsonFilePath))
         {
             Console.Error.WriteLine($"{Path.GetFileName(jsonFilePath)} doesn't exist");
@@ -37,15 +34,21 @@ public sealed class Executor
         try
         {
             var tokens = _lexer.Tokenize(content);
-            return _parser.Parse(tokens) ? 0 : 1;
+            _parser.Parse(tokens);
+
+            return 0;
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine(ex.Message);
-
             return 1;
         }
     }
+
+    private static string GetJsonFilePath(string argument)
+        => Path.IsPathFullyQualified(argument)
+            ? argument
+            : Path.Combine(Directory.GetCurrentDirectory(), argument);
 
     private static bool ValidateArgument(string argument)
     {

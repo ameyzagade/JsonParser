@@ -8,7 +8,7 @@ public class ExecutorTests
 
     private sealed class ExecutorContext
     {
-        public string FilePath { get; set; }
+        public string FilePath { get; set; } = string.Empty;
         public int ExecutionStatus { get; set; }
     }
 
@@ -19,7 +19,11 @@ public class ExecutorTests
             new ExecutorContext
             {
                 FilePath = "data/1/valid.json",
-            }
+            },
+            new ExecutorContext
+            {
+                FilePath = "data/2/valid.json"
+            },
         ];
 
         foreach (var context in contexts)
@@ -28,5 +32,27 @@ public class ExecutorTests
         }
 
         Assert.Contains(contexts, x => x.ExecutionStatus == 0);
+    }
+
+    [Fact]
+    public async Task WhenValidJsonShouldReturnZero()
+    {
+        ExecutorContext[] contexts = [
+            new ExecutorContext
+            {
+                FilePath = "data/1/invalid.json",
+            },
+            new ExecutorContext
+            {
+                FilePath = "data/2/invalid.json"
+            },
+        ];
+
+        foreach (var context in contexts)
+        {
+            context.ExecutionStatus = await _executor.Execute([context.FilePath]);
+        }
+
+        Assert.Contains(contexts, x => x.ExecutionStatus == 1);
     }
 }
