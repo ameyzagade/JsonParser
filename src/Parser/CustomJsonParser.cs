@@ -7,10 +7,10 @@ public sealed class CustomJsonParser
     private enum ParserState
     {
         ExpectLeftBrace,
-        ExpectString,
         ExpectRightBraceOrString,
+        ExpectString,
         ExpectColon,
-        ExpectValue,
+        ExpectStringOrPrimitiveValue,
         ExpectCommaOrRightBrace,
         ExpectRightBrace,
         Complete
@@ -52,8 +52,8 @@ public sealed class CustomJsonParser
                 ProcessExpectColon(context);
                 break;
 
-            case ParserState.ExpectValue:
-                ProcessExpectValue(context);
+            case ParserState.ExpectStringOrPrimitiveValue:
+                ExpectStringOrPrimitiveValue(context);
                 break;
 
             case ParserState.ExpectCommaOrRightBrace:
@@ -91,15 +91,19 @@ public sealed class CustomJsonParser
     private void ProcessExpectColon(ParserContext context)
         => context.CurrentState = context.CurrentToken!.TokenType switch
         {
-            TokenType.Colon => ParserState.ExpectValue,
+            TokenType.Colon => ParserState.ExpectStringOrPrimitiveValue,
             _ => throw new CustomJsonParserException($"Unexpected token received at position {context.CurrentPosition}. Token: {context.CurrentToken.Value}. Expected Token: Colon."),
         };
 
-    private void ProcessExpectValue(ParserContext context)
-        => context.CurrentState = context.CurrentToken!.TokenType switch
+    private void ExpectStringOrPrimitiveValue(ParserContext context)
+        => context.CurrentState = context.CurrentToken switch
         {
-            TokenType.Value => ParserState.ExpectCommaOrRightBrace,
-            _ => throw new CustomJsonParserException($"Unexpected token received at position {context.CurrentPosition}. Token: {context.CurrentToken.Value}. Expected Token: Value."),
+            { TokenType: TokenType.String } => ParserState.ExpectCommaOrRightBrace,
+            { TokenType: TokenType.PrimitiveValue, Value: "true" } => ParserState.ExpectCommaOrRightBrace,
+            { TokenType: TokenType.PrimitiveValue, Value: "false" } => ParserState.ExpectCommaOrRightBrace,
+            { TokenType: TokenType.PrimitiveValue, Value: "null" } => ParserState.ExpectCommaOrRightBrace,
+            { TokenType: TokenType.PrimitiveValue } when double.TryParse(context.CurrentToken.Value, out var _) => ParserState.ExpectCommaOrRightBrace,
+            _ => throw new CustomJsonParserException($"Unexpected token received at position {context.CurrentPosition}. Token: {context.CurrentToken!.Value}."),
         };
 
     private void ProcessExpectCommaOrRightBrace(ParserContext context)

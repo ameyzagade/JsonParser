@@ -1,4 +1,4 @@
-namespace JsonParser.Api.UnitTests.Executor;
+namespace JsonParser.App.UnitTests.Executor;
 
 using Executor = App.Executor.Executor;
 
@@ -18,15 +18,15 @@ public class ExecutorTests
         ExecutorContext[] contexts = [
             new ExecutorContext
             {
-                FilePath = "data/1/valid.json",
+                FilePath = "data/Files/1/valid.json",
             },
             new ExecutorContext
             {
-                FilePath = "data/2/valid.json"
+                FilePath = "data/Files/2/valid.json"
             },
             new ExecutorContext
             {
-                FilePath = "data/2/valid2.json"
+                FilePath = "data/Files/2/valid2.json"
             },
         ];
 
@@ -44,15 +44,15 @@ public class ExecutorTests
         ExecutorContext[] contexts = [
             new ExecutorContext
             {
-                FilePath = "data/1/invalid.json",
+                FilePath = "data/Files/1/invalid.json",
             },
             new ExecutorContext
             {
-                FilePath = "data/2/invalid.json"
+                FilePath = "data/Files2/invalid.json"
             },
             new ExecutorContext
             {
-                FilePath = "data/2/invalid2.json"
+                FilePath = "data/Files/2/invalid2.json"
             },
         ];
 

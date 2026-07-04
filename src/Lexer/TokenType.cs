@@ -3,9 +3,9 @@ namespace JsonParser.App.Lexer;
 public enum TokenType
 {
     LeftBrace,
-    String,
+    RightBrace,
     Colon,
-    Value,
     Comma,
-    RightBrace
+    String,
+    PrimitiveValue
 }
