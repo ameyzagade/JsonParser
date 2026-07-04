@@ -84,13 +84,17 @@ public sealed class JsonLexer
                 context.CurrentState = LexerState.Key;
                 break;
 
+            case ',':
+                context.GeneratedTokens.Add(new Token(TokenType.Comma, ","));
+                break;
+
             case ':':
                 context.GeneratedTokens.Add(new Token(TokenType.Colon, ":"));
                 context.CurrentState = LexerState.Value;
                 break;
 
             default:
-                throw new JsonLexerException($"Unexpected character received at position {context.CurrentPosition}. Character: {context.CurrentCharacter}");
+                throw new JsonLexerException($"Unexpected character received at position {context.CurrentPosition}. Current Character: {context.CurrentCharacter}. Expected Character(s): Any whitespace, right brace, left brace, double quote, comma or colon.");
         }
     }
 
@@ -100,14 +104,15 @@ public sealed class JsonLexer
         {
             context.LexemeBuffer.Append(context.CurrentCharacter);
             context.EscapeNext = false;
+
             return;
         }
 
         switch (context.CurrentCharacter)
         {
             case '"':
-                context.CurrentState = LexerState.Normal;
                 FlushToken(context, TokenType.String);
+                context.CurrentState = LexerState.Normal;
                 break;
 
             case '\\':
@@ -136,9 +141,24 @@ public sealed class JsonLexer
 
         switch (context.CurrentCharacter)
         {
-            case '}':
-                context.CurrentState = LexerState.Normal;
+            case ',':
+                if (context.InQuote)
+                {
+                    context.LexemeBuffer.Append(context.CurrentCharacter);
+                }
+                else
+                {
+                    // Only applicable when value is of type bool, null, number
+                    FlushToken(context, TokenType.Value);
+                    context.GeneratedTokens.Add(new Token(TokenType.Comma, ","));
+
+                    context.CurrentState = LexerState.Normal;
+                }
+                break;
+
+            case '}': // Only applicable when value is of type bool, null, number
                 FlushToken(context, TokenType.Value);
+                context.CurrentState = LexerState.Normal;
                 break;
 
             case '"':
@@ -148,9 +168,10 @@ public sealed class JsonLexer
                 }
                 else
                 {
+                    // Only applicable when value is of type string
                     context.InQuote = false;
-                    context.CurrentState = LexerState.Normal;
                     FlushToken(context, TokenType.Value);
+                    context.CurrentState = LexerState.Normal;
                 }
                 break;
 
@@ -172,14 +193,14 @@ public sealed class JsonLexer
         }
 
         var value = context.LexemeBuffer.ToString();
-        context.LexemeBuffer.Clear();
-
         context.GeneratedTokens.Add(new Token(type, value));
+
+        context.LexemeBuffer.Clear();
     }
 
     private void ProcessEscapeSequence(LexerContext context, char currentCharacter)
     {
-        var nextChar = Peek(context) ?? throw new JsonLexerException($"Input abruptly ends after character: {context.CurrentCharacter}, position: {context.CurrentPosition}");
+        var nextChar = Peek(context) ?? throw new JsonLexerException($"Input abruptly ends after position: {context.CurrentPosition} having character: {context.CurrentCharacter}. Expected character(s): Any escape character.");
         switch (nextChar)
         {
             case '"' or '\\' or '/' or 'b' or 'f' or 'n' or 'r' or 't':

@@ -9,7 +9,7 @@ public class ExecutorTests
     private sealed class ExecutorContext
     {
         public string FilePath { get; set; } = string.Empty;
-        public int ExecutionStatus { get; set; }
+        public int ExecutionStatus { get; set; } = 0;
     }
 
     [Fact]
@@ -23,6 +23,10 @@ public class ExecutorTests
             new ExecutorContext
             {
                 FilePath = "data/2/valid.json"
+            },
+            new ExecutorContext
+            {
+                FilePath = "data/2/valid2.json"
             },
         ];
 
@@ -45,6 +49,10 @@ public class ExecutorTests
             new ExecutorContext
             {
                 FilePath = "data/2/invalid.json"
+            },
+            new ExecutorContext
+            {
+                FilePath = "data/2/invalid2.json"
             },
         ];
 

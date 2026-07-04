@@ -7,9 +7,11 @@ public sealed class CustomJsonParser
     private enum ParserState
     {
         ExpectLeftBrace,
+        ExpectString,
         ExpectRightBraceOrString,
         ExpectColon,
         ExpectValue,
+        ExpectCommaOrRightBrace,
         ExpectRightBrace,
         Complete
     }
@@ -27,9 +29,8 @@ public sealed class CustomJsonParser
         foreach (var token in tokens)
         {
             context.CurrentToken = token;
-            context.CurrentPosition += token.Value.Length;
-
             Process(context);
+            context.CurrentPosition += token.Value.Length;
         }
 
         ValidateEndState(context);
@@ -55,6 +56,14 @@ public sealed class CustomJsonParser
                 ProcessExpectValue(context);
                 break;
 
+            case ParserState.ExpectCommaOrRightBrace:
+                ProcessExpectCommaOrRightBrace(context);
+                break;
+
+            case ParserState.ExpectString:
+                ProcessExpectString(context);
+                break;
+
             case ParserState.ExpectRightBrace:
                 ProcessExpectRightBrace(context);
                 break;
@@ -65,24 +74,55 @@ public sealed class CustomJsonParser
     }
 
     private void ProcessExpectLeftBrace(ParserContext context)
-        => context.CurrentState = ParserState.ExpectRightBraceOrString;
+        => context.CurrentState = context.CurrentToken!.TokenType switch
+        {
+            TokenType.LeftBrace => ParserState.ExpectRightBraceOrString,
+            _ => throw new CustomJsonParserException($"Unexpected token received at position {context.CurrentPosition}. Token: {context.CurrentToken.Value}. Expected Token: Left Brace."),
+        };
 
     private void ProcessExpectRightBraceOrString(ParserContext context)
         => context.CurrentState = context.CurrentToken!.TokenType switch
         {
-            TokenType.RightBrace => ParserState.Complete,
             TokenType.String => ParserState.ExpectColon,
-            _ => throw new CustomJsonParserException($"Unexpected token received at position {context.CurrentPosition}. Token: {context.CurrentToken.Value}"),
+            TokenType.RightBrace => ParserState.Complete,
+            _ => throw new CustomJsonParserException($"Unexpected token received at position {context.CurrentPosition}. Token: {context.CurrentToken.Value}. Expected Token: Colon or Right Brace."),
         };
 
     private void ProcessExpectColon(ParserContext context)
-        => context.CurrentState = ParserState.ExpectValue;
+        => context.CurrentState = context.CurrentToken!.TokenType switch
+        {
+            TokenType.Colon => ParserState.ExpectValue,
+            _ => throw new CustomJsonParserException($"Unexpected token received at position {context.CurrentPosition}. Token: {context.CurrentToken.Value}. Expected Token: Colon."),
+        };
 
     private void ProcessExpectValue(ParserContext context)
-        => context.CurrentState = ParserState.ExpectRightBrace;
+        => context.CurrentState = context.CurrentToken!.TokenType switch
+        {
+            TokenType.Value => ParserState.ExpectCommaOrRightBrace,
+            _ => throw new CustomJsonParserException($"Unexpected token received at position {context.CurrentPosition}. Token: {context.CurrentToken.Value}. Expected Token: Value."),
+        };
+
+    private void ProcessExpectCommaOrRightBrace(ParserContext context)
+        => context.CurrentState = context.CurrentToken!.TokenType switch
+        {
+            TokenType.Comma => ParserState.ExpectString,
+            TokenType.RightBrace => ParserState.Complete,
+            _ => throw new CustomJsonParserException($"Unexpected token received at position {context.CurrentPosition}. Token: {context.CurrentToken.Value}. Expected Token: Comma or Right Brace."),
+        };
+
+    private void ProcessExpectString(ParserContext context)
+        => context.CurrentState = context.CurrentToken!.TokenType switch
+        {
+            TokenType.String => ParserState.ExpectColon,
+            _ => throw new CustomJsonParserException($"Unexpected token received at position {context.CurrentPosition}. Token: {context.CurrentToken.Value}. Expected Token: String."),
+        };
 
     private void ProcessExpectRightBrace(ParserContext context)
-        => context.CurrentState = ParserState.Complete;
+        => context.CurrentState = context.CurrentToken!.TokenType switch
+        {
+            TokenType.RightBrace => ParserState.Complete,
+            _ => throw new CustomJsonParserException($"Unexpected token received at position {context.CurrentPosition}. Token: {context.CurrentToken.Value}. Expected Token: Right Brace."),
+        };
 
     private void ValidateEndState(ParserContext context)
     {
