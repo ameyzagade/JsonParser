@@ -1,25 +1,25 @@
 using System.Collections;
 using JsonParser.App.Lexer;
 
-namespace JsonParser.Tests.TestData;
+namespace JsonParser.Tests.Lexer.TestData;
 
-public class ValidJsonTestData : IEnumerable<object[]>
+public class ValidJsonLexerTestData : IEnumerable<object[]>
 {
     public IEnumerator<object[]> GetEnumerator()
     {
         yield return [
-            new JsonTestData("", [])
+            new JsonLexerTestData("", [])
         ];
 
         yield return [
-            new JsonTestData("""{}""", [
+            new JsonLexerTestData("""{}""", [
                 new Token(TokenType.LeftBrace, "{"),
                 new Token(TokenType.RightBrace, "}")
             ])
         ];
 
         yield return [
-            new JsonTestData("""{ "Name": "John Doe" }""", [
+            new JsonLexerTestData("""{ "Name": "John Doe" }""", [
                 new Token(TokenType.LeftBrace, "{"),
 
                 new Token(TokenType.String, "Name"),
@@ -31,7 +31,7 @@ public class ValidJsonTestData : IEnumerable<object[]>
         ];
 
         yield return [
-           new JsonTestData("""{ "Name": "" }""", [
+           new JsonLexerTestData("""{ "Name": "" }""", [
                 new Token(TokenType.LeftBrace, "{"),
 
                 new Token(TokenType.String, "Name"),
@@ -43,7 +43,7 @@ public class ValidJsonTestData : IEnumerable<object[]>
         ];
 
         yield return [
-           new JsonTestData("""{ "Name": "John \"Doe\"" }""", [
+           new JsonLexerTestData("""{ "Name": "John \"Doe\"" }""", [
                 new Token(TokenType.LeftBrace, "{"),
 
                 new Token(TokenType.String, "Name"),
@@ -55,7 +55,7 @@ public class ValidJsonTestData : IEnumerable<object[]>
         ];
 
         yield return [
-           new JsonTestData("""{"key": true     }""", [
+           new JsonLexerTestData("""{"key": true     }""", [
                 new Token(TokenType.LeftBrace, "{"),
 
                 new Token(TokenType.String, "key"),
@@ -67,7 +67,7 @@ public class ValidJsonTestData : IEnumerable<object[]>
         ];
 
         yield return [
-           new JsonTestData("""
+           new JsonLexerTestData("""
            {
             "key": "value",
             "key2": "value"
@@ -89,7 +89,7 @@ public class ValidJsonTestData : IEnumerable<object[]>
         ];
 
         yield return [
-            new JsonTestData("""
+            new JsonLexerTestData("""
             {
                 "key1": true,
                 "key2": false,

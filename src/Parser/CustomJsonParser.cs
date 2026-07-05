@@ -85,7 +85,7 @@ public sealed class CustomJsonParser
         {
             TokenType.String => ParserState.ExpectColon,
             TokenType.RightBrace => ParserState.Complete,
-            _ => throw new CustomJsonParserException($"Unexpected token received at position {context.CurrentPosition}. Token: {context.CurrentToken.Value}. Expected Token: Colon or Right Brace."),
+            _ => throw new CustomJsonParserException($"Unexpected token received at position {context.CurrentPosition}. Token: {context.CurrentToken.Value}. Expected Token: String or Right Brace."),
         };
 
     private void ProcessExpectColon(ParserContext context)
