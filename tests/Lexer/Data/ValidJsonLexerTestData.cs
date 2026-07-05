@@ -19,6 +19,37 @@ public class ValidJsonLexerTestData : IEnumerable<object[]>
         ];
 
         yield return [
+            new JsonLexerTestData("""{}""", [
+                new Token(TokenType.LeftBrace, "{"),
+                new Token(TokenType.RightBrace, "}")
+            ])
+        ];
+
+        yield return [
+            new JsonLexerTestData("""{ "path": "C:\\Users\\John" }""", [
+                new Token(TokenType.LeftBrace, "{"),
+
+                new Token(TokenType.String, "path"),
+                new Token(TokenType.Colon, ":"),
+                new Token(TokenType.String, "C:\\Users\\John"),
+
+                new Token(TokenType.RightBrace, "}"),
+            ])
+        ];
+
+        yield return [
+            new JsonLexerTestData("""{ "message": "hello\nworld" }""", [
+                new Token(TokenType.LeftBrace, "{"),
+
+                new Token(TokenType.String, "message"),
+                new Token(TokenType.Colon, ":"),
+                new Token(TokenType.String, "hellonworld"),
+
+                new Token(TokenType.RightBrace, "}"),
+            ])
+        ];       
+
+        yield return [
             new JsonLexerTestData("""{ "Name": "John Doe" }""", [
                 new Token(TokenType.LeftBrace, "{"),
 
@@ -56,6 +87,18 @@ public class ValidJsonLexerTestData : IEnumerable<object[]>
 
         yield return [
            new JsonLexerTestData("""{"key": true     }""", [
+                new Token(TokenType.LeftBrace, "{"),
+
+                new Token(TokenType.String, "key"),
+                new Token(TokenType.Colon, ":"),
+                new Token(TokenType.PrimitiveValue, "true"),
+
+                new Token(TokenType.RightBrace, "}"),
+            ])
+        ];
+
+        yield return [
+            new JsonLexerTestData("""{"key":true}""", [
                 new Token(TokenType.LeftBrace, "{"),
 
                 new Token(TokenType.String, "key"),
