@@ -120,6 +120,11 @@ public sealed class JsonLexer
                 context.CurrentState = LexerState.StringValue;
                 break;
 
+            case '{':
+                Emit(context, TokenType.LeftBrace, "{");
+                context.CurrentState = LexerState.Normal;
+                break;
+
             default:
                 context.LexemeBuffer.Append(context.CurrentCharacter);
                 context.CurrentState = LexerState.PrimitiveValue;

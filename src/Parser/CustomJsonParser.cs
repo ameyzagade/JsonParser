@@ -10,7 +10,7 @@ public sealed class CustomJsonParser
         ExpectRightBraceOrString,
         ExpectString,
         ExpectColon,
-        ExpectStringOrPrimitiveValue,
+        ExpectStringOrPrimitiveValueOrObject,
         ExpectCommaOrRightBrace,
         ExpectRightBrace,
         Complete
@@ -18,19 +18,24 @@ public sealed class CustomJsonParser
 
     private sealed class ParserContext
     {
+        public IReadOnlyList<Token> InputTokens { get; init; } = [];
         public Token? CurrentToken { get; set; }
-        public int CurrentPosition { get; set; } = 1;
+        public int CurrentPosition { get; set; }
         public ParserState CurrentState { get; set; } = ParserState.ExpectLeftBrace;
     }
 
     public void Parse(IReadOnlyList<Token> tokens)
     {
-        var context = new ParserContext();
-        foreach (var token in tokens)
+        var context = new ParserContext
         {
+            InputTokens = tokens,
+        };
+
+        for (context.CurrentPosition = 0; context.CurrentPosition < tokens.Count; context.CurrentPosition++)
+        {
+            Token? token = tokens[context.CurrentPosition];
             context.CurrentToken = token;
             Process(context);
-            context.CurrentPosition += token.Value.Length;
         }
 
         ValidateEndState(context);
@@ -52,8 +57,8 @@ public sealed class CustomJsonParser
                 ProcessExpectColon(context);
                 break;
 
-            case ParserState.ExpectStringOrPrimitiveValue:
-                ExpectStringOrPrimitiveValue(context);
+            case ParserState.ExpectStringOrPrimitiveValueOrObject:
+                ProcessExpectStringOrPrimitiveValueOrObject(context);
                 break;
 
             case ParserState.ExpectCommaOrRightBrace:
@@ -91,12 +96,19 @@ public sealed class CustomJsonParser
     private void ProcessExpectColon(ParserContext context)
         => context.CurrentState = context.CurrentToken!.TokenType switch
         {
-            TokenType.Colon => ParserState.ExpectStringOrPrimitiveValue,
+            TokenType.Colon => ParserState.ExpectStringOrPrimitiveValueOrObject,
             _ => throw new CustomJsonParserException($"Unexpected token received at position {context.CurrentPosition}. Token: {context.CurrentToken.Value}. Expected Token: Colon."),
         };
 
-    private void ExpectStringOrPrimitiveValue(ParserContext context)
-        => context.CurrentState = context.CurrentToken switch
+    private void ProcessExpectStringOrPrimitiveValueOrObject(ParserContext context)
+    {
+        if (context.CurrentToken is { TokenType: TokenType.LeftBrace })
+        {
+            ParseObject(context);
+            return;
+        }
+
+        context.CurrentState = context.CurrentToken switch
         {
             { TokenType: TokenType.String } => ParserState.ExpectCommaOrRightBrace,
             { TokenType: TokenType.PrimitiveValue, Value: "true" } => ParserState.ExpectCommaOrRightBrace,
@@ -105,6 +117,7 @@ public sealed class CustomJsonParser
             { TokenType: TokenType.PrimitiveValue } when double.TryParse(context.CurrentToken.Value, out var _) => ParserState.ExpectCommaOrRightBrace,
             _ => throw new CustomJsonParserException($"Unexpected token received at position {context.CurrentPosition}. Token: {context.CurrentToken!.Value}."),
         };
+    }
 
     private void ProcessExpectCommaOrRightBrace(ParserContext context)
         => context.CurrentState = context.CurrentToken!.TokenType switch
@@ -127,6 +140,34 @@ public sealed class CustomJsonParser
             TokenType.RightBrace => ParserState.Complete,
             _ => throw new CustomJsonParserException($"Unexpected token received at position {context.CurrentPosition}. Token: {context.CurrentToken.Value}. Expected Token: Right Brace."),
         };
+
+    private void ParseObject(ParserContext context)
+    {
+        while (true)
+        {
+            if (context.CurrentToken!.TokenType == TokenType.RightBrace)
+            {
+                break;
+            }
+
+            MoveNextToken(context);
+            ProcessExpectString(context);
+
+            MoveNextToken(context);
+            ProcessExpectColon(context);
+
+            MoveNextToken(context);
+            ProcessExpectStringOrPrimitiveValueOrObject(context);
+
+            MoveNextToken(context);
+            ProcessExpectCommaOrRightBrace(context);
+            
+            context.CurrentState = ParserState.ExpectCommaOrRightBrace;
+        }
+    }
+
+    private void MoveNextToken(ParserContext context)
+        => context.CurrentToken = context.InputTokens[++context.CurrentPosition];
 
     private void ValidateEndState(ParserContext context)
     {
