@@ -4,8 +4,13 @@ public enum TokenType
 {
     LeftBrace,
     RightBrace,
+    LeftBracket,
+    RightBracket,
     Colon,
     Comma,
     String,
-    PrimitiveValue
+    Number,
+    Identifier,
+    Invalid,
+    EndOfStream
 }

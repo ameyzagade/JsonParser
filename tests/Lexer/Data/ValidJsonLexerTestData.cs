@@ -8,44 +8,24 @@ public class ValidJsonLexerTestData : IEnumerable<object[]>
     public IEnumerator<object[]> GetEnumerator()
     {
         yield return [
-            new JsonLexerTestData("", [])
-        ];
-
-        yield return [
-            new JsonLexerTestData("""{}""", [
-                new Token(TokenType.LeftBrace, "{"),
-                new Token(TokenType.RightBrace, "}")
+            new JsonLexerTestData("", [
+                new Token(TokenType.EndOfStream, string.Empty)
             ])
         ];
 
         yield return [
             new JsonLexerTestData("""{}""", [
                 new Token(TokenType.LeftBrace, "{"),
-                new Token(TokenType.RightBrace, "}")
+                new Token(TokenType.RightBrace, "}"),
+                new Token(TokenType.EndOfStream, string.Empty)
             ])
         ];
 
         yield return [
-            new JsonLexerTestData("""{ "path": "C:\\Users\\John" }""", [
-                new Token(TokenType.LeftBrace, "{"),
-
-                new Token(TokenType.String, "path"),
-                new Token(TokenType.Colon, ":"),
-                new Token(TokenType.String, "C:\\Users\\John"),
-
-                new Token(TokenType.RightBrace, "}"),
-            ])
-        ];
-
-        yield return [
-            new JsonLexerTestData("""{ "message": "hello\nworld" }""", [
-                new Token(TokenType.LeftBrace, "{"),
-
-                new Token(TokenType.String, "message"),
-                new Token(TokenType.Colon, ":"),
-                new Token(TokenType.String, "hellonworld"),
-
-                new Token(TokenType.RightBrace, "}"),
+            new JsonLexerTestData("""[]""", [
+                new Token(TokenType.LeftBracket, "["),
+                new Token(TokenType.RightBracket, "]"),
+                new Token(TokenType.EndOfStream, string.Empty)
             ])
         ];
 
@@ -58,6 +38,78 @@ public class ValidJsonLexerTestData : IEnumerable<object[]>
                 new Token(TokenType.String, "John Doe"),
 
                 new Token(TokenType.RightBrace, "}"),
+
+                new Token(TokenType.EndOfStream, string.Empty)
+            ])
+        ];
+
+        yield return [
+            new JsonLexerTestData("""{ "Age": 30 }""", [
+                new Token(TokenType.LeftBrace, "{"),
+
+                new Token(TokenType.String, "Age"),
+                new Token(TokenType.Colon, ":"),
+                new Token(TokenType.Number, "30"),
+
+                new Token(TokenType.RightBrace, "}"),
+
+                new Token(TokenType.EndOfStream, string.Empty)
+            ])
+        ];
+
+        yield return [
+            new JsonLexerTestData("""{ "Salaried": true }""", [
+                new Token(TokenType.LeftBrace, "{"),
+
+                new Token(TokenType.String, "Salaried"),
+                new Token(TokenType.Colon, ":"),
+                new Token(TokenType.Identifier, "true"),
+
+                new Token(TokenType.RightBrace, "}"),
+
+                new Token(TokenType.EndOfStream, string.Empty)
+            ])
+        ];
+
+        yield return [
+            new JsonLexerTestData("""{ "Details": null }""", [
+                new Token(TokenType.LeftBrace, "{"),
+
+                new Token(TokenType.String, "Details"),
+                new Token(TokenType.Colon, ":"),
+                new Token(TokenType.Identifier, "null"),
+
+                new Token(TokenType.RightBrace, "}"),
+
+                new Token(TokenType.EndOfStream, string.Empty)
+            ])
+        ];
+
+        yield return [
+            new JsonLexerTestData("""{ "path": "C:\\Users\\John" }""", [
+                new Token(TokenType.LeftBrace, "{"),
+
+                new Token(TokenType.String, "path"),
+                new Token(TokenType.Colon, ":"),
+                new Token(TokenType.String, "C:\\Users\\John"),
+
+                new Token(TokenType.RightBrace, "}"),
+
+                new Token(TokenType.EndOfStream, string.Empty)
+            ])
+        ];
+
+        yield return [
+            new JsonLexerTestData("""{ "message": "hello\nworld" }""", [
+                new Token(TokenType.LeftBrace, "{"),
+
+                new Token(TokenType.String, "message"),
+                new Token(TokenType.Colon, ":"),
+                new Token(TokenType.String, "hellonworld"),
+
+                new Token(TokenType.RightBrace, "}"),
+
+                new Token(TokenType.EndOfStream, string.Empty)
             ])
         ];
 
@@ -70,6 +122,8 @@ public class ValidJsonLexerTestData : IEnumerable<object[]>
                 new Token(TokenType.String, ""),
 
                 new Token(TokenType.RightBrace, "}"),
+
+                new Token(TokenType.EndOfStream, string.Empty)
             ])
         ];
 
@@ -82,31 +136,37 @@ public class ValidJsonLexerTestData : IEnumerable<object[]>
                 new Token(TokenType.String, "John \"Doe\""),
 
                 new Token(TokenType.RightBrace, "}"),
+
+                new Token(TokenType.EndOfStream, string.Empty)
             ])
         ];
 
         yield return [
-           new JsonLexerTestData("""{"key": true     }""", [
+            new JsonLexerTestData("""{"key": true     }""", [
                 new Token(TokenType.LeftBrace, "{"),
 
                 new Token(TokenType.String, "key"),
                 new Token(TokenType.Colon, ":"),
-                new Token(TokenType.PrimitiveValue, "true"),
+                new Token(TokenType.Identifier, "true"),
 
                 new Token(TokenType.RightBrace, "}"),
+
+                new Token(TokenType.EndOfStream, string.Empty)
             ])
         ];
 
         yield return [
             new JsonLexerTestData("""{"key":true}""", [
-                new Token(TokenType.LeftBrace, "{"),
+                    new Token(TokenType.LeftBrace, "{"),
 
-                new Token(TokenType.String, "key"),
-                new Token(TokenType.Colon, ":"),
-                new Token(TokenType.PrimitiveValue, "true"),
+                    new Token(TokenType.String, "key"),
+                    new Token(TokenType.Colon, ":"),
+                    new Token(TokenType.Identifier, "true"),
 
-                new Token(TokenType.RightBrace, "}"),
-            ])
+                    new Token(TokenType.RightBrace, "}"),
+
+                    new Token(TokenType.EndOfStream, string.Empty)
+                ])
         ];
 
         yield return [
@@ -128,6 +188,8 @@ public class ValidJsonLexerTestData : IEnumerable<object[]>
                 new Token(TokenType.String, "value"),
 
                 new Token(TokenType.RightBrace, "}"),
+
+                new Token(TokenType.EndOfStream, string.Empty)
            ])
         ];
 
@@ -145,17 +207,17 @@ public class ValidJsonLexerTestData : IEnumerable<object[]>
 
                 new Token(TokenType.String, "key1"),
                 new Token(TokenType.Colon, ":"),
-                new Token(TokenType.PrimitiveValue, "true"),
+                new Token(TokenType.Identifier, "true"),
                 new Token(TokenType.Comma, ","),
 
                 new Token(TokenType.String, "key2"),
                 new Token(TokenType.Colon, ":"),
-                new Token(TokenType.PrimitiveValue, "false"),
+                new Token(TokenType.Identifier, "false"),
                 new Token(TokenType.Comma, ","),
 
                 new Token(TokenType.String, "key3"),
                 new Token(TokenType.Colon, ":"),
-                new Token(TokenType.PrimitiveValue, "null"),
+                new Token(TokenType.Identifier, "null"),
                 new Token(TokenType.Comma, ","),
 
                 new Token(TokenType.String, "key4"),
@@ -165,9 +227,11 @@ public class ValidJsonLexerTestData : IEnumerable<object[]>
 
                 new Token(TokenType.String, "key5"),
                 new Token(TokenType.Colon, ":"),
-                new Token(TokenType.PrimitiveValue, "101"),
+                new Token(TokenType.Number, "101"),
 
                 new Token(TokenType.RightBrace, "}"),
+
+                new Token(TokenType.EndOfStream, string.Empty)
             ])
         ];
 
@@ -192,7 +256,9 @@ public class ValidJsonLexerTestData : IEnumerable<object[]>
 
                 new Token(TokenType.RightBrace, "}"),
 
-                new Token(TokenType.RightBrace, "}")
+                new Token(TokenType.RightBrace, "}"),
+
+                new Token(TokenType.EndOfStream, string.Empty)
             ])
         ];
 
@@ -221,21 +287,23 @@ public class ValidJsonLexerTestData : IEnumerable<object[]>
 
                 new Token(TokenType.String, "Age"),
                 new Token(TokenType.Colon, ":"),
-                new Token(TokenType.PrimitiveValue, "30"),
+                new Token(TokenType.Number, "30"),
                 new Token(TokenType.Comma, ","),
 
                 new Token(TokenType.String, "Citizenship"),
                 new Token(TokenType.Colon, ":"),
-                new Token(TokenType.PrimitiveValue, "false"),
+                new Token(TokenType.Identifier, "false"),
                 new Token(TokenType.Comma, ","),
 
                 new Token(TokenType.String, "OtherDetails"),
                 new Token(TokenType.Colon, ":"),
-                new Token(TokenType.PrimitiveValue, "null"),
+                new Token(TokenType.Identifier, "null"),
 
                 new Token(TokenType.RightBrace, "}"),
 
-                new Token(TokenType.RightBrace, "}")
+                new Token(TokenType.RightBrace, "}"),
+
+                new Token(TokenType.EndOfStream, string.Empty)
             ])
         ];
 
@@ -269,17 +337,17 @@ public class ValidJsonLexerTestData : IEnumerable<object[]>
 
                 new Token(TokenType.String, "Age"),
                 new Token(TokenType.Colon, ":"),
-                new Token(TokenType.PrimitiveValue, "30"),
+                new Token(TokenType.Number, "30"),
                 new Token(TokenType.Comma, ","),
 
                 new Token(TokenType.String, "Citizenship"),
                 new Token(TokenType.Colon, ":"),
-                new Token(TokenType.PrimitiveValue, "false"),
+                new Token(TokenType.Identifier, "false"),
                 new Token(TokenType.Comma, ","),
 
                 new Token(TokenType.String, "OtherDetails"),
                 new Token(TokenType.Colon, ":"),
-                new Token(TokenType.PrimitiveValue, "null"),
+                new Token(TokenType.Identifier, "null"),
 
                 new Token(TokenType.RightBrace, "}"),
                 new Token(TokenType.Comma, ","),
@@ -301,11 +369,13 @@ public class ValidJsonLexerTestData : IEnumerable<object[]>
 
                 new Token(TokenType.String, "Active"),
                 new Token(TokenType.Colon, ":"),
-                new Token(TokenType.PrimitiveValue, "true"),
+                new Token(TokenType.Identifier, "true"),
 
                 new Token(TokenType.RightBrace, "}"),
 
-                new Token(TokenType.RightBrace, "}")
+                new Token(TokenType.RightBrace, "}"),
+
+                new Token(TokenType.EndOfStream, string.Empty)
             ])
         ];
 
@@ -344,12 +414,12 @@ public class ValidJsonLexerTestData : IEnumerable<object[]>
 
                 new Token(TokenType.String, "Age"),
                 new Token(TokenType.Colon, ":"),
-                new Token(TokenType.PrimitiveValue, "30"),
+                new Token(TokenType.Number, "30"),
                 new Token(TokenType.Comma, ","),
 
                 new Token(TokenType.String, "Citizenship"),
                 new Token(TokenType.Colon, ":"),
-                new Token(TokenType.PrimitiveValue, "false"),
+                new Token(TokenType.Identifier, "false"),
                 new Token(TokenType.Comma, ","),
 
                 new Token(TokenType.String, "Contact Number"),
@@ -369,7 +439,7 @@ public class ValidJsonLexerTestData : IEnumerable<object[]>
 
                 new Token(TokenType.String, "Visa Expired"),
                 new Token(TokenType.Colon, ":"),
-                new Token(TokenType.PrimitiveValue, "false"),
+                new Token(TokenType.Identifier, "false"),
                 new Token(TokenType.Comma, ","),
 
                 new Token(TokenType.String, "Emergency Contact Number"),
@@ -398,11 +468,178 @@ public class ValidJsonLexerTestData : IEnumerable<object[]>
 
                 new Token(TokenType.String, "Active"),
                 new Token(TokenType.Colon, ":"),
-                new Token(TokenType.PrimitiveValue, "true"),
+                new Token(TokenType.Identifier, "true"),
 
                 new Token(TokenType.RightBrace, "}"),
 
-                new Token(TokenType.RightBrace, "}")
+                new Token(TokenType.RightBrace, "}"),
+
+                new Token(TokenType.EndOfStream, string.Empty)
+            ])
+        ];
+
+        yield return [
+            new JsonLexerTestData("""
+                [ 1, 2, 3]
+            """, [
+                new Token(TokenType.LeftBracket, "["),
+
+                new Token(TokenType.Number, "1"),
+                new Token(TokenType.Comma, ","),
+
+                new Token(TokenType.Number, "2"),
+                new Token(TokenType.Comma, ","),
+
+                new Token(TokenType.Number, "3"),
+
+                new Token(TokenType.RightBracket, "]"),
+
+                new Token(TokenType.EndOfStream, string.Empty)
+            ])
+        ];
+
+        yield return [
+            new JsonLexerTestData("""
+                [
+                    {
+                        "Name": "John Doe",
+                        "Age": 30,
+                        "Other Details": null,
+                        "Salaried": true
+                    },
+                    {
+                        "Name": "Jane Doe",
+                        "Age": 29,
+                        "Other Details": {
+                            "Nationality": "American",
+                            "Visa Expired": false,
+                            "Rank": 12
+                        },
+                        "Salaried": true
+                    }
+                ]
+            """, [
+                new Token(TokenType.LeftBracket, "["),
+
+                new Token(TokenType.LeftBrace, "{"),
+
+                new Token(TokenType.String, "Name"),
+                new Token(TokenType.Colon, ":"),
+                new Token(TokenType.String, "John Doe"),
+                new Token(TokenType.Comma, ","),
+
+                new Token(TokenType.String, "Age"),
+                new Token(TokenType.Colon, ":"),
+                new Token(TokenType.Number, "30"),
+                new Token(TokenType.Comma, ","),
+
+                new Token(TokenType.String, "Other Details"),
+                new Token(TokenType.Colon, ":"),
+                new Token(TokenType.Identifier, "null"),
+                new Token(TokenType.Comma, ","),
+
+                new Token(TokenType.String, "Salaried"),
+                new Token(TokenType.Colon, ":"),
+                new Token(TokenType.Identifier, "true"),
+
+                new Token(TokenType.RightBrace, "}"),
+                new Token(TokenType.Comma, ","),
+
+                new Token(TokenType.LeftBrace, "{"),
+
+                new Token(TokenType.String, "Name"),
+                new Token(TokenType.Colon, ":"),
+                new Token(TokenType.String, "Jane Doe"),
+                new Token(TokenType.Comma, ","),
+
+                new Token(TokenType.String, "Age"),
+                new Token(TokenType.Colon, ":"),
+                new Token(TokenType.Number, "29"),
+                new Token(TokenType.Comma, ","),
+
+                new Token(TokenType.String, "Other Details"),
+                new Token(TokenType.Colon, ":"),
+
+                new Token(TokenType.LeftBrace, "{"),
+
+                new Token(TokenType.String, "Nationality"),
+                new Token(TokenType.Colon, ":"),
+                new Token(TokenType.String, "American"),
+                new Token(TokenType.Comma, ","),
+
+                new Token(TokenType.String, "Visa Expired"),
+                new Token(TokenType.Colon, ":"),
+                new Token(TokenType.Identifier, "false"),
+                new Token(TokenType.Comma, ","),
+
+                new Token(TokenType.String, "Rank"),
+                new Token(TokenType.Colon, ":"),
+                new Token(TokenType.Number, "12"),
+
+                new Token(TokenType.RightBrace, "}"),
+                new Token(TokenType.Comma, ","),
+
+                new Token(TokenType.String, "Salaried"),
+                new Token(TokenType.Colon, ":"),
+                new Token(TokenType.Identifier, "true"),
+
+                new Token(TokenType.RightBrace, "}"),
+
+                new Token(TokenType.RightBracket, "]"),
+
+                new Token(TokenType.EndOfStream, string.Empty)
+            ])
+        ];
+
+        yield return [
+            new JsonLexerTestData("""
+            {
+                "Fruits": ["Apple", "Banana"]
+            }
+            """, [
+                new Token(TokenType.LeftBrace, "{"),
+
+                new Token(TokenType.String, "Fruits"),
+                new Token(TokenType.Colon, ":"),
+
+                new Token(TokenType.LeftBracket, "["),
+                new Token(TokenType.String, "Apple"),
+                new Token(TokenType.Comma, ","),
+                new Token(TokenType.String, "Banana"),
+                new Token(TokenType.RightBracket, "]"),
+
+                new Token(TokenType.RightBrace, "}"),
+
+                new Token(TokenType.EndOfStream, string.Empty),
+            ])
+        ];
+
+        yield return [
+            new JsonLexerTestData("""
+            {
+                "Numbers": [1, 2, 3]
+            }
+            """, [
+                new Token(TokenType.LeftBrace, "{"),
+
+                new Token(TokenType.String, "Numbers"),
+                new Token(TokenType.Colon, ":"),
+
+                new Token(TokenType.LeftBracket, "["),
+
+                new Token(TokenType.Number, "1"),
+                new Token(TokenType.Comma, ","),
+
+                new Token(TokenType.Number, "2"),
+                new Token(TokenType.Comma, ","),
+
+                new Token(TokenType.Number, "3"),
+
+                new Token(TokenType.RightBracket, "]"),
+
+                new Token(TokenType.RightBrace, "}"),
+
+                new Token(TokenType.EndOfStream, string.Empty)
             ])
         ];
     }
