@@ -8,8 +8,8 @@ public class JsonLexerTests
     private readonly App.Lexer.JsonLexer _sut = new();
 
     [Theory]
-    [ClassData(typeof(InvalidEscapeSequenceJsonLexerTestData))]
-    public void WhenInvalidEscapeSequence_ShouldThrowException(JsonLexerTestData data)
+    [ClassData(typeof(InvalidJsonLexerTestData))]
+    public void WhenUnsuccessfulScan_ShouldThrowException(JsonLexerTestData data)
     {
         var exception = Assert.Throws<JsonLexerException>(() => _sut.Tokenize(data.Input));
         Assert.Equal(data.ExceptionMessage, exception.Message);
@@ -17,7 +17,7 @@ public class JsonLexerTests
 
     [Theory]
     [ClassData(typeof(ValidJsonLexerTestData))]
-    public void WhenValidJson_ShouldReturnTokens(JsonLexerTestData data)
+    public void WhenSuccessfulScan_ShouldReturnTokens(JsonLexerTestData data)
     {
         var actualTokens = _sut.Tokenize(data.Input);
 

@@ -101,7 +101,7 @@ public sealed class JsonLexer
     {
         if (!MoveNext(context))
         {
-            throw new JsonLexerException($"Lexer input abruptly terminated at position: {context.CurrentPosition + 1} in the input JSON. No more character encountered in the input after double quote!");
+            throw new JsonLexerException($"Lexer input abruptly terminated at position: {context.CurrentPosition + 1} in the input JSON. No character encountered in the input after double quote!");
         }
 
         while (true)
@@ -129,7 +129,7 @@ public sealed class JsonLexer
             {
                 // if there are no more characters in the input buffer, then stop reading and exit immediately
                 // and throw exception this has ended without a matching " character
-                throw new JsonLexerException($"Lexer input abruptly terminated at position: {context.CurrentPosition + 1} in the input JSON. No more character encountered in the input after double quote!");
+                throw new JsonLexerException($"Lexer input abruptly terminated at position: {context.CurrentPosition + 1} in the input JSON. No closing double quote encountered!");
             }
         }
     }
@@ -138,7 +138,7 @@ public sealed class JsonLexer
     {
         if (!MoveNext(context))
         {
-            throw new JsonLexerException($"Lexer input abruptly terminated at position: {context.CurrentPosition + 1} in the input JSON. No more character(s) encountered in the input after the escape sequence!");
+            throw new JsonLexerException($"Lexer input abruptly terminated at position: {context.CurrentPosition + 1} in the input JSON. No character encountered in the input after the escape sequence!");
         }
 
         switch (context.CurrentCharacter)
