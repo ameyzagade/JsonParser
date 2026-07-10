@@ -1,4 +1,4 @@
-namespace JsonParser.App.Lexer;
+namespace JsonParser.App.TokenModel;
 
 public enum TokenType
 {

@@ -1,4 +1,5 @@
 using System.Text;
+using JsonParser.App.TokenModel;
 using JsonParser.App.Lexer.Exceptions;
 
 namespace JsonParser.App.Lexer;
