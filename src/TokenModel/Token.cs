@@ -1,3 +1,3 @@
 namespace JsonParser.App.TokenModel;
 
-public sealed record Token(TokenType TokenType, string Value);
+public sealed record Token(TokenType TokenType, string Value, int StartIndex);

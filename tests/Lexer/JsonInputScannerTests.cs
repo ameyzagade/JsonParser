@@ -3,21 +3,21 @@ using JsonParser.Tests.Lexer.TestData;
 
 namespace JsonParser.Tests.Lexer;
 
-public class JsonLexerTests
+public class JsonInputScannerTests
 {
-    private readonly App.Lexer.JsonLexer _sut = new();
+    private readonly App.Lexer.JsonInputScanner _sut = new();
 
     [Theory]
-    [ClassData(typeof(InvalidJsonLexerTestData))]
-    public void WhenUnsuccessfulScan_ShouldThrowException(JsonLexerTestData data)
+    [ClassData(typeof(InvalidJsonInputScannerTestData))]
+    public void WhenUnsuccessfulScan_ShouldThrowException(JsonInputScannerTestData data)
     {
-        var exception = Assert.Throws<JsonLexerException>(() => _sut.Tokenize(data.Input));
+        var exception = Assert.Throws<JsonInputScannerException>(() => _sut.Tokenize(data.Input));
         Assert.Equal(data.ExceptionMessage, exception.Message);
     }
 
     [Theory]
-    [ClassData(typeof(ValidJsonLexerTestData))]
-    public void WhenSuccessfulScan_ShouldReturnTokens(JsonLexerTestData data)
+    [ClassData(typeof(TokenizableJsonInputScannerTestData))]
+    public void WhenSuccessfulScan_ShouldReturnTokens(JsonInputScannerTestData data)
     {
         var actualTokens = _sut.Tokenize(data.Input);
 
@@ -29,6 +29,7 @@ public class JsonLexerTests
 
             Assert.Equal(expectedToken.TokenType, actualToken.TokenType);
             Assert.Equal(expectedToken.Value, actualToken.Value);
+            Assert.Equal(expectedToken.StartIndex, actualToken.StartIndex);
         }
     }
 }
