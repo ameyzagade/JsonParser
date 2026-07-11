@@ -25,10 +25,7 @@ public sealed class CustomJsonParser
 
     public void Parse(IReadOnlyList<Token> tokens)
     {
-        var context = new Context
-        {
-            CursorState = new CursorState(-1, tokens),
-        };
+        Context context = IntializeContext(tokens);
 
         MoveNext(context);
         ParseValue(context);
@@ -36,6 +33,12 @@ public sealed class CustomJsonParser
 
         ValidateEndState(context);
     }
+
+    private Context IntializeContext(IReadOnlyList<Token> tokens)
+        => new()
+        {
+            CursorState = new CursorState(-1, tokens),
+        };
 
     private void ParseValue(Context context)
     {
@@ -170,7 +173,7 @@ public sealed class CustomJsonParser
 
     private void ValidateEndState(Context context)
     {
-        if (context.CursorState.CurrentToken?.TokenType is TokenType.EndOfStream)
+        if (context.CursorState.CurrentToken?.TokenType is not TokenType.EndOfStream)
         {
             throw new CustomJsonParserException();
         }
