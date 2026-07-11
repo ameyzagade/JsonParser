@@ -5,7 +5,7 @@ namespace JsonParser.App.Executor;
 
 public sealed class Executor
 {
-    private readonly JsonLexer _lexer = new();
+    private readonly JsonInputScanner _lexer = new();
     private readonly CustomJsonParser _parser = new();
 
     public async Task<int> Execute(string[] arguments)

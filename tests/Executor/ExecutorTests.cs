@@ -28,6 +28,18 @@ public class ExecutorTests
             {
                 FilePath = "Executor/Data/Files/2/valid2.json"
             },
+            new ExecutorContext
+            {
+                FilePath = "Executor/Data/Files/3/valid.json"
+            },
+            new ExecutorContext
+            {
+                FilePath = "Executor/Data/Files/4/valid.json"
+            },
+            new ExecutorContext
+            {
+                FilePath = "Executor/Data/Files/4/valid2.json"
+            },
         ];
 
         foreach (var context in contexts)
@@ -53,6 +65,14 @@ public class ExecutorTests
             new ExecutorContext
             {
                 FilePath = "Executor/Data/Files/2/invalid2.json"
+            },
+            new ExecutorContext
+            {
+                FilePath = "Executor/Data/Files/3/invalid.json"
+            },
+            new ExecutorContext
+            {
+                FilePath = "Executor/Data/Files/4/invalid.json"
             },
         ];
 
