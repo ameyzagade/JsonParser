@@ -1,5 +1,5 @@
 using System.Collections;
-using JsonParser.App.Lexer;
+using JsonParser.App.TokenModel;
 
 namespace JsonParser.Tests.Parser.TestData;
 
@@ -7,499 +7,258 @@ public class InvalidCustomJsonParserTestData : IEnumerable<object[]>
 {
     public IEnumerator<object[]> GetEnumerator()
     {
-        yield return [
+        // Empty JSON: EndOfStream cannot be parsed as a value
+        yield return
+        [
             new JsonParserTestData(
                 [
-                    new Token(TokenType.String, "value"),
+                    new Token(TokenType.EndOfStream, string.Empty, 1),
                 ],
-                "Unexpected token received at position 1. Token: value. Expected Token: Left Brace."
+                "Unexpected token at position 1. Expected a string, number, identifier, object or array!"
             ),
         ];
 
-        yield return [
+        // Invalid top-level token: ,
+        yield return
+        [
             new JsonParserTestData(
                 [
-                    new Token(TokenType.PrimitiveValue, "1"),
+                    new Token(TokenType.Comma, ",", 1),
+                    new Token(TokenType.EndOfStream, string.Empty, 2),
                 ],
-                "Unexpected token received at position 1. Token: 1. Expected Token: Left Brace."
+                "Unexpected token at position 1. Expected a string, number, identifier, object or array!"
             ),
         ];
 
-        yield return [
+        // Extra token after a complete value:
+        // true false
+        yield return
+        [
             new JsonParserTestData(
                 [
-                    new Token(TokenType.Comma, ","),
+                    new Token(TokenType.Identifier, "true", 1),
+                    new Token(TokenType.Identifier, "false", 6),
+                    new Token(TokenType.EndOfStream, string.Empty, 11),
                 ],
-                "Unexpected token received at position 1. Token: ,. Expected Token: Left Brace."
+                "A token of type EndOfStream was expected but a token of type Identifier was received at position 6!"
             ),
         ];
 
-        yield return [
+        // Invalid identifier
+        yield return
+        [
             new JsonParserTestData(
                 [
-                    new Token(TokenType.Colon, ":"),
+                    new Token(TokenType.Identifier, "True", 1),
+                    new Token(TokenType.EndOfStream, string.Empty, 5),
                 ],
-                "Unexpected token received at position 1. Token: :. Expected Token: Left Brace."
+                "Unexpected token at position 1. Expected true, false or null!"
             ),
         ];
 
-        yield return [
+        // Invalid number
+        yield return
+        [
             new JsonParserTestData(
                 [
-                    new Token(TokenType.RightBrace, "}"),
+                    new Token(TokenType.Number, "12.2.2", 1),
+                    new Token(TokenType.EndOfStream, string.Empty, 7),
                 ],
-                "Unexpected token received at position 1. Token: }. Expected Token: Left Brace."
+                "Number is in a incorrect format at position: 1. Received 12.2.2."
             ),
         ];
 
-        yield return [
+        // Object missing closing brace:
+        // {"Name":"John"
+        yield return
+        [
             new JsonParserTestData(
                 [
-                    new Token(TokenType.LeftBrace, "{"),
-
-                    new Token(TokenType.Colon, ":"),
+                    new Token(TokenType.LeftBrace, "{", 1),
+                    new Token(TokenType.String, "Name", 2),
+                    new Token(TokenType.Colon, ":", 8),
+                    new Token(TokenType.String, "John", 9),
+                    new Token(TokenType.EndOfStream, string.Empty, 15),
                 ],
-                "Unexpected token received at position 2. Token: :. Expected Token: String or Right Brace."
+                "A token of type RightBrace was expected but a token of type EndOfStream was received at position 15!"
             ),
         ];
 
-        yield return [
+        // Object key must be a string:
+        // {true:"John"}
+        yield return
+        [
             new JsonParserTestData(
                 [
-                    new Token(TokenType.LeftBrace, "{"),
-
-                    new Token(TokenType.LeftBrace, "{"),
+                    new Token(TokenType.LeftBrace, "{", 1),
+                    new Token(TokenType.Identifier, "true", 2),
+                    new Token(TokenType.Colon, ":", 6),
+                    new Token(TokenType.String, "John", 7),
+                    new Token(TokenType.RightBrace, "}", 13),
+                    new Token(TokenType.EndOfStream, string.Empty, 14),
                 ],
-                "Unexpected token received at position 2. Token: {. Expected Token: String or Right Brace."
+                "A token of type String was expected but a token of type Identifier was received at position 2!"
             ),
         ];
 
-        yield return [
+        // Missing colon:
+        // {"Name" "John"}
+        yield return
+        [
             new JsonParserTestData(
                 [
-                    new Token(TokenType.LeftBrace, "{"),
-
-                    new Token(TokenType.Comma, ","),
+                    new Token(TokenType.LeftBrace, "{", 1),
+                    new Token(TokenType.String, "Name", 2),
+                    new Token(TokenType.String, "John", 9),
+                    new Token(TokenType.RightBrace, "}", 15),
+                    new Token(TokenType.EndOfStream, string.Empty, 16),
                 ],
-                "Unexpected token received at position 2. Token: ,. Expected Token: String or Right Brace."
+                "A token of type Colon was expected but a token of type String was received at position 9!"
             ),
         ];
 
-        yield return [
+        // Missing value:
+        // {"Name":}
+        yield return
+        [
             new JsonParserTestData(
                 [
-                    new Token(TokenType.LeftBrace, "{"),
-
-                    new Token(TokenType.PrimitiveValue, "1"),
+                    new Token(TokenType.LeftBrace, "{", 1),
+                    new Token(TokenType.String, "Name", 2),
+                    new Token(TokenType.Colon, ":", 8),
+                    new Token(TokenType.RightBrace, "}", 9),
+                    new Token(TokenType.EndOfStream, string.Empty, 10),
                 ],
-                "Unexpected token received at position 2. Token: 1. Expected Token: String or Right Brace."
+                "Unexpected token at position 9. Expected a string, number, identifier, object or array!"
             ),
         ];
 
-        yield return [
+        // Missing comma between object pairs:
+        // {"Name":"John" "Age":30}
+        yield return
+        [
             new JsonParserTestData(
                 [
-                    new Token(TokenType.LeftBrace, "{"),
+                    new Token(TokenType.LeftBrace, "{", 1),
 
-                    new Token(TokenType.String, "Name"),
-                    new Token(TokenType.String, "John"),
+                    new Token(TokenType.String, "Name", 2),
+                    new Token(TokenType.Colon, ":", 8),
+                    new Token(TokenType.String, "John", 9),
+
+                    new Token(TokenType.String, "Age", 16),
+                    new Token(TokenType.Colon, ":", 21),
+                    new Token(TokenType.Number, "30", 22),
+
+                    new Token(TokenType.RightBrace, "}", 24),
+                    new Token(TokenType.EndOfStream, string.Empty, 25),
                 ],
-                "Unexpected token received at position 6. Token: John. Expected Token: Colon."
+                "A token of type RightBrace was expected but a token of type String was received at position 16!"
             ),
         ];
 
-        yield return [
+        // Trailing comma in object:
+        // {"Name":"John",}
+        yield return
+        [
             new JsonParserTestData(
                 [
-                    new Token(TokenType.LeftBrace, "{"),
-
-                    new Token(TokenType.String, "Name"),
-                    new Token(TokenType.PrimitiveValue, "2"),
+                    new Token(TokenType.LeftBrace, "{", 1),
+                    new Token(TokenType.String, "Name", 2),
+                    new Token(TokenType.Colon, ":", 8),
+                    new Token(TokenType.String, "John", 9),
+                    new Token(TokenType.Comma, ",", 15),
+                    new Token(TokenType.RightBrace, "}", 16),
+                    new Token(TokenType.EndOfStream, string.Empty, 17),
                 ],
-                "Unexpected token received at position 6. Token: 2. Expected Token: Colon."
+                "A token of type String was expected but a token of type RightBrace was received at position 16!"
             ),
         ];
 
-        yield return [
+        // Array missing closing bracket:
+        // [1,2,3
+        yield return
+        [
             new JsonParserTestData(
                 [
-                    new Token(TokenType.LeftBrace, "{"),
-
-                    new Token(TokenType.String, "Name"),
-                    new Token(TokenType.Comma, ","),
+                    new Token(TokenType.LeftBracket, "[", 1),
+                    new Token(TokenType.Number, "1", 2),
+                    new Token(TokenType.Comma, ",", 3),
+                    new Token(TokenType.Number, "2", 4),
+                    new Token(TokenType.Comma, ",", 5),
+                    new Token(TokenType.Number, "3", 6),
+                    new Token(TokenType.EndOfStream, string.Empty, 7),
                 ],
-                "Unexpected token received at position 6. Token: ,. Expected Token: Colon."
+                "A token of type RightBracket was expected but a token of type EndOfStream was received at position 7!"
             ),
         ];
 
-        yield return [
+        // Missing comma between array values:
+        // [1 2]
+        yield return
+        [
             new JsonParserTestData(
                 [
-                    new Token(TokenType.LeftBrace, "{"),
-
-                    new Token(TokenType.String, "Name"),
-                    new Token(TokenType.LeftBrace, "{"),
+                    new Token(TokenType.LeftBracket, "[", 1),
+                    new Token(TokenType.Number, "1", 2),
+                    new Token(TokenType.Number, "2", 4),
+                    new Token(TokenType.RightBracket, "]", 5),
+                    new Token(TokenType.EndOfStream, string.Empty, 6),
                 ],
-                "Unexpected token received at position 6. Token: {. Expected Token: Colon."
+                "A token of type RightBracket was expected but a token of type Number was received at position 4!"
             ),
         ];
 
-        yield return [
+        // Trailing comma in array:
+        // [1,2,]
+        yield return
+        [
             new JsonParserTestData(
                 [
-                    new Token(TokenType.LeftBrace, "{"),
-
-                    new Token(TokenType.String, "Name"),
-                    new Token(TokenType.RightBrace, "}"),
+                    new Token(TokenType.LeftBracket, "[", 1),
+                    new Token(TokenType.Number, "1", 2),
+                    new Token(TokenType.Comma, ",", 3),
+                    new Token(TokenType.Number, "2", 4),
+                    new Token(TokenType.Comma, ",", 5),
+                    new Token(TokenType.RightBracket, "]", 6),
+                    new Token(TokenType.EndOfStream, string.Empty, 7),
                 ],
-                "Unexpected token received at position 6. Token: }. Expected Token: Colon."
+                "Unexpected token at position 6. Expected a string, number, identifier, object or array!"
             ),
         ];
 
-        yield return [
+        // Mismatched object delimiter:
+        // {"Name":"John"]
+        yield return
+        [
             new JsonParserTestData(
                 [
-                    new Token(TokenType.LeftBrace, "{"),
-
-                    new Token(TokenType.PrimitiveValue, "true"),
-                    new Token(TokenType.Colon, ":"),
-                    new Token(TokenType.RightBrace, "}"),
+                    new Token(TokenType.LeftBrace, "{", 1),
+                    new Token(TokenType.String, "Name", 2),
+                    new Token(TokenType.Colon, ":", 8),
+                    new Token(TokenType.String, "John", 9),
+                    new Token(TokenType.RightBracket, "]", 15),
+                    new Token(TokenType.EndOfStream, string.Empty, 16),
                 ],
-                "Unexpected token received at position 2. Token: true. Expected Token: String or Right Brace."
+                "A token of type RightBrace was expected but a token of type RightBracket was received at position 15!"
             ),
         ];
 
-        yield return [
+        // Mismatched array delimiter:
+        // [1,2,3}
+        yield return
+        [
             new JsonParserTestData(
                 [
-                    new Token(TokenType.LeftBrace, "{"),
-
-                    new Token(TokenType.String, "Name"),
-                    new Token(TokenType.Colon, ":"),
-                    new Token(TokenType.LeftBrace, "{"),
+                    new Token(TokenType.LeftBracket, "[", 1),
+                    new Token(TokenType.Number, "1", 2),
+                    new Token(TokenType.Comma, ",", 3),
+                    new Token(TokenType.Number, "2", 4),
+                    new Token(TokenType.Comma, ",", 5),
+                    new Token(TokenType.Number, "3", 6),
+                    new Token(TokenType.RightBrace, "}", 7),
+                    new Token(TokenType.EndOfStream, string.Empty, 8),
                 ],
-                "Unexpected token received at position 7. Token: {."
-            ),
-        ];
-
-        yield return [
-            new JsonParserTestData(
-                [
-                    new Token(TokenType.LeftBrace, "{"),
-
-                    new Token(TokenType.String, "Name"),
-                    new Token(TokenType.Colon, ":"),
-                    new Token(TokenType.RightBrace, "}"),
-                ],
-                "Unexpected token received at position 7. Token: }."
-            ),
-        ];
-
-        yield return [
-            new JsonParserTestData(
-                [
-                    new Token(TokenType.LeftBrace, "{"),
-
-                    new Token(TokenType.String, "Name"),
-                    new Token(TokenType.Colon, ":"),
-                    new Token(TokenType.Colon, ":"),
-                ],
-                "Unexpected token received at position 7. Token: :."
-            ),
-        ];
-
-        yield return [
-            new JsonParserTestData(
-                [
-                    new Token(TokenType.LeftBrace, "{"),
-
-                    new Token(TokenType.String, "Name"),
-                    new Token(TokenType.Colon, ":"),
-                    new Token(TokenType.Comma, ","),
-                ],
-                "Unexpected token received at position 7. Token: ,."
-            ),
-        ];
-
-        yield return [
-            new JsonParserTestData(
-                [
-                    new Token(TokenType.LeftBrace, "{"),
-
-                    new Token(TokenType.String, "Name"),
-                    new Token(TokenType.Colon, ":"),
-                    new Token(TokenType.PrimitiveValue, "True"),
-                ],
-                "Unexpected token received at position 7. Token: True."
-            ),
-        ];
-
-        yield return [
-            new JsonParserTestData(
-                [
-                    new Token(TokenType.LeftBrace, "{"),
-
-                    new Token(TokenType.String, "Name"),
-                    new Token(TokenType.Colon, ":"),
-                    new Token(TokenType.PrimitiveValue, "False"),
-                ],
-                "Unexpected token received at position 7. Token: False."
-            ),
-        ];
-
-        yield return [
-            new JsonParserTestData(
-                [
-                    new Token(TokenType.LeftBrace, "{"),
-
-                    new Token(TokenType.String, "Name"),
-                    new Token(TokenType.Colon, ":"),
-                    new Token(TokenType.PrimitiveValue, "Null"),
-                ],
-                "Unexpected token received at position 7. Token: Null."
-            ),
-        ];
-
-        yield return [
-            new JsonParserTestData(
-                [
-                    new Token(TokenType.LeftBrace, "{"),
-
-                    new Token(TokenType.String, "Name"),
-                    new Token(TokenType.Colon, ":"),
-                    new Token(TokenType.PrimitiveValue, "12.2.2"),
-                ],
-                "Unexpected token received at position 7. Token: 12.2.2."
-            ),
-        ];
-
-        yield return [
-            new JsonParserTestData(
-                [
-                    new Token(TokenType.LeftBrace, "{"),
-
-                    new Token(TokenType.String, "Name"),
-                    new Token(TokenType.Colon, ":"),
-                    new Token(TokenType.String, "John Doe"),
-                    new Token(TokenType.LeftBrace, "}"),
-                ],
-                "Unexpected token received at position 15. Token: }. Expected Token: Comma or Right Brace."
-            ),
-        ];
-
-        yield return [
-            new JsonParserTestData(
-                [
-                    new Token(TokenType.LeftBrace, "{"),
-
-                    new Token(TokenType.String, "Name"),
-                    new Token(TokenType.Colon, ":"),
-                    new Token(TokenType.String, "John Doe"),
-                    new Token(TokenType.LeftBrace, "{"),
-                ],
-                "Unexpected token received at position 15. Token: {. Expected Token: Comma or Right Brace."
-            ),
-        ];
-
-        yield return [
-            new JsonParserTestData(
-                [
-                    new Token(TokenType.LeftBrace, "{"),
-
-                    new Token(TokenType.String, "Name"),
-                    new Token(TokenType.Colon, ":"),
-                    new Token(TokenType.String, "John Doe"),
-                    new Token(TokenType.Colon, ":"),
-                ],
-                "Unexpected token received at position 15. Token: :. Expected Token: Comma or Right Brace."
-            ),
-        ];
-
-        yield return [
-            new JsonParserTestData(
-                [
-                    new Token(TokenType.LeftBrace, "{"),
-
-                    new Token(TokenType.String, "Name"),
-                    new Token(TokenType.Colon, ":"),
-                    new Token(TokenType.String, "John Doe"),
-                    new Token(TokenType.String, "value"),
-                ],
-                "Unexpected token received at position 15. Token: value. Expected Token: Comma or Right Brace."
-            ),
-        ];
-
-        yield return [
-            new JsonParserTestData(
-                [
-                    new Token(TokenType.LeftBrace, "{"),
-
-                    new Token(TokenType.String, "Age"),
-                    new Token(TokenType.Colon, ":"),
-                    new Token(TokenType.PrimitiveValue, "30"),
-                    new Token(TokenType.PrimitiveValue, "true"),
-                ],
-                "Unexpected token received at position 8. Token: true. Expected Token: Comma or Right Brace."
-            ),
-        ];
-
-        yield return [
-            new JsonParserTestData(
-                [
-                    new Token(TokenType.LeftBrace, "{"),
-
-                    new Token(TokenType.String, "Age"),
-                    new Token(TokenType.Colon, ":"),
-                    new Token(TokenType.PrimitiveValue, "1"),
-                    new Token(TokenType.Comma, ","),
-                ],
-                "Parser not in the expected Complete state after consuming all tokens!"
-            ),
-        ];
-
-        yield return [
-            new JsonParserTestData(
-                [
-                    new Token(TokenType.LeftBrace, "{"),
-
-                    new Token(TokenType.String, "Age"),
-                    new Token(TokenType.Colon, ":"),
-                    new Token(TokenType.PrimitiveValue, "1"),
-                    new Token(TokenType.Comma, ","),
-
-                    new Token(TokenType.LeftBrace, "{"),
-                ],
-                "Unexpected token received at position 8. Token: {. Expected Token: String."
-            ),
-        ];
-
-        yield return [
-            new JsonParserTestData(
-                [
-                    new Token(TokenType.LeftBrace, "{"),
-
-                    new Token(TokenType.String, "Age"),
-                    new Token(TokenType.Colon, ":"),
-                    new Token(TokenType.PrimitiveValue, "1"),
-                    new Token(TokenType.Comma, ","),
-
-                    new Token(TokenType.RightBrace, "}"),
-                ],
-                "Unexpected token received at position 8. Token: }. Expected Token: String."
-            ),
-        ];
-
-        yield return [
-            new JsonParserTestData(
-                [
-                    new Token(TokenType.LeftBrace, "{"),
-
-                    new Token(TokenType.String, "Age"),
-                    new Token(TokenType.Colon, ":"),
-                    new Token(TokenType.PrimitiveValue, "1"),
-                    new Token(TokenType.Comma, ","),
-
-                    new Token(TokenType.LeftBrace, "{"),
-                ],
-                "Unexpected token received at position 8. Token: {. Expected Token: String."
-            ),
-        ];
-
-        yield return [
-            new JsonParserTestData(
-                [
-                    new Token(TokenType.LeftBrace, "{"),
-
-                    new Token(TokenType.String, "Age"),
-                    new Token(TokenType.Colon, ":"),
-                    new Token(TokenType.PrimitiveValue, "1"),
-                    new Token(TokenType.Comma, ","),
-
-                    new Token(TokenType.LeftBrace, "{"),
-                ],
-                "Unexpected token received at position 8. Token: {. Expected Token: String."
-            ),
-        ];
-
-        yield return [
-            new JsonParserTestData(
-                [
-                    new Token(TokenType.LeftBrace, "{"),
-
-                    new Token(TokenType.String, "Age"),
-                    new Token(TokenType.Colon, ":"),
-                    new Token(TokenType.PrimitiveValue, "1"),
-                    new Token(TokenType.Comma, ","),
-
-                    new Token(TokenType.Colon, ":"),
-                ],
-                "Unexpected token received at position 8. Token: :. Expected Token: String."
-            ),
-        ];
-
-        yield return [
-            new JsonParserTestData(
-                [
-                    new Token(TokenType.LeftBrace, "{"),
-
-                    new Token(TokenType.String, "Age"),
-                    new Token(TokenType.Colon, ":"),
-                    new Token(TokenType.PrimitiveValue, "1"),
-                    new Token(TokenType.Comma, ","),
-
-                    new Token(TokenType.Comma, ","),
-                ],
-                "Unexpected token received at position 8. Token: ,. Expected Token: String."
-            ),
-        ];
-
-        yield return [
-            new JsonParserTestData(
-                [
-                    new Token(TokenType.LeftBrace, "{"),
-
-                    new Token(TokenType.String, "Age"),
-                    new Token(TokenType.Colon, ":"),
-                    new Token(TokenType.PrimitiveValue, "1"),
-                    new Token(TokenType.Comma, ","),
-
-                    new Token(TokenType.PrimitiveValue, "2"),
-                ],
-                "Unexpected token received at position 8. Token: 2. Expected Token: String."
-            ),
-        ];
-
-        yield return [
-            new JsonParserTestData(
-                [
-                    new Token(TokenType.LeftBrace, "{"),
-
-                    new Token(TokenType.String, "Age"),
-                    new Token(TokenType.Colon, ":"),
-                    new Token(TokenType.PrimitiveValue, "1"),
-                    new Token(TokenType.Comma, ","),
-
-                    new Token(TokenType.String, "Name"),
-                ],
-                "Parser not in the expected Complete state after consuming all tokens!"
-            ),
-        ];
-
-        yield return [
-            new JsonParserTestData(
-                [
-                    new Token(TokenType.LeftBrace, "{"),
-
-                    new Token(TokenType.String, "Age"),
-                    new Token(TokenType.Colon, ":"),
-                    new Token(TokenType.PrimitiveValue, "1"),
-                    new Token(TokenType.Comma, ","),
-
-                    new Token(TokenType.String, "Pincode"),
-                    new Token(TokenType.Colon, ":"),
-                    new Token(TokenType.String, "400 001"),
-                ],
-                "Parser not in the expected Complete state after consuming all tokens!"
+                "A token of type RightBracket was expected but a token of type RightBrace was received at position 7!"
             ),
         ];
     }

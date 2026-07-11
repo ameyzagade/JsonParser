@@ -1,4 +1,4 @@
-using JsonParser.App.Lexer;
+using JsonParser.App.TokenModel;
 
 namespace JsonParser.Tests.Parser.TestData;
 
