@@ -177,29 +177,42 @@ public sealed class JsonInputScanner
             throw new JsonInputScannerException($"Input terminated after position: {tokenStartIndex} in middle of an unicode escape sequence!");
         }
 
-        tokenStartIndex = context.Cursor.CurrentPosition + 1;
+        string unicodeSequence = GetUnicodeSequence(context);
+        ValidateUnicodeSequence(context, unicodeSequence);
+        int codepoint = GetUnicodeCodepoint(context, unicodeSequence);
 
-        int unicodeLength = 4;
-        var unicodeSequenceEndPosition = context.Cursor.CurrentPosition + unicodeLength;
-        if (unicodeSequenceEndPosition > context.Cursor.InputBuffer!.Length)
+        context.LexemeBuffer.Append((char)codepoint);
+
+        SkipCharacter(context, 3);
+    }
+
+    private string GetUnicodeSequence(Context context)
+    {
+        var unicodeSequenceEndIndex = context.Cursor.CurrentPosition + 4;        // the unicode sequence has a length of 4
+        if (unicodeSequenceEndIndex > context.Cursor.InputBuffer!.Length)
         {
-            throw new JsonInputScannerException($"Input terminated after position: {tokenStartIndex} in middle of an unicode escape sequence!");
+            throw new JsonInputScannerException($"Input terminated after position: {context.Cursor.CurrentPosition + 1} in middle of an unicode escape sequence!");
         }
 
-        var unicodeSequence = context.Cursor.InputBuffer[context.Cursor.CurrentPosition..unicodeSequenceEndPosition];
+        return context.Cursor.InputBuffer[context.Cursor.CurrentPosition..unicodeSequenceEndIndex];
+    }
+
+    private void ValidateUnicodeSequence(Context context, string unicodeSequence)
+    {
         if (!HasAllHexCharacters(unicodeSequence))
         {
-            throw new JsonInputScannerException($"Unknown unicode escape sequence encountered at position: {tokenStartIndex + 1}. Received unicode sequence: {unicodeSequence}");
+            throw new JsonInputScannerException($"Unknown unicode escape sequence encountered at position: {context.Cursor.CurrentPosition + 1}. Received unicode sequence: {unicodeSequence}");
         }
+    }
 
+    private int GetUnicodeCodepoint(Context context, string unicodeSequence)
+    {
         if (!int.TryParse(unicodeSequence, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out int codePoint))
         {
-            throw new JsonInputScannerException($"Couldn't determine the unicode escape sequence at position: {tokenStartIndex + 1}. Received unicode sequence: {unicodeSequence}");
+            throw new JsonInputScannerException($"Couldn't determine the unicode escape sequence at position: {context.Cursor.CurrentPosition + 1}. Received unicode sequence: {unicodeSequence}");
         }
 
-        context.LexemeBuffer.Append((char)codePoint);
-
-        SkipCharactersAhead(context, 3);
+        return codePoint;
     }
 
     private void ReadIdentifier(Context context)
@@ -287,7 +300,7 @@ public sealed class JsonInputScanner
         return context.Cursor.CurrentCharacter is not null;
     }
 
-    private bool SkipCharactersAhead(Context context, int total = 1)
+    private bool SkipCharacter(Context context, int total = 1)
     {
         for (int i = 0; i < total; i++)
         {
