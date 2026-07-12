@@ -47,7 +47,7 @@ public sealed class CustomJsonParser
         switch (context.CursorState.CurrentToken!.TokenType)
         {
             case TokenType.String:
-                Consume(context, TokenType.String);
+                ConsumeAndMoveNext(context, TokenType.String);
                 break;
 
             case TokenType.Number:
@@ -110,7 +110,7 @@ public sealed class CustomJsonParser
             ParseRemainingCommaSeparated(context, ParsePair);
         }
 
-        Consume(context, TokenType.RightBrace);
+        ConsumeAndMoveNext(context, TokenType.RightBrace);
     }
 
     private void ParseArray(Context context)
@@ -123,27 +123,29 @@ public sealed class CustomJsonParser
             ParseRemainingCommaSeparated(context, ParseValue);
         }
 
-        Consume(context, TokenType.RightBracket);
+        ConsumeAndMoveNext(context, TokenType.RightBracket);
     }
 
     private void ParsePair(Context context)
     {
-        Consume(context, TokenType.String);
-        Consume(context, TokenType.Colon);
+        ConsumeAndMoveNext(context, TokenType.String);
+        ConsumeAndMoveNext(context, TokenType.Colon);
         ParseValue(context);
     }
 
-    private void Consume(Context context, TokenType expectedTokenType)
+    private void ConsumeAndMoveNext(Context context, TokenType expectedTokenType)
     {
         ValidateExpectedToken(context, expectedTokenType);
         MoveNext(context);
     }
 
+    private void Consume(Context context, TokenType expectedTokenType) => ValidateExpectedToken(context, expectedTokenType);
+
     private void ParseRemainingCommaSeparated(Context context, Action<Context> parseItem)
     {
         while (context.CursorState.CurrentToken?.TokenType == TokenType.Comma)
         {
-            Consume(context, TokenType.Comma);
+            ConsumeAndMoveNext(context, TokenType.Comma);
             parseItem(context);
         }
     }
