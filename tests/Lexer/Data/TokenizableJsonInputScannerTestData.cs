@@ -52,6 +52,21 @@ public class TokenizableJsonInputScannerTestData : IEnumerable<object[]>
             ]),
         ];
 
+        // Unicode string support
+        yield return
+        [
+            new JsonInputScannerTestData(
+                """ { "Value": "\u4e16\u754c \ud83c\udf0d" } """, [
+                    new Token(TokenType.LeftBrace, "{", 2),
+                    new Token(TokenType.String, "Value", 4),
+                    new Token(TokenType.Colon, ":", 11),
+                    new Token(TokenType.String, "世界 🌍", 13),
+                    new Token(TokenType.RightBrace, "}", 41),
+                    new Token(TokenType.EndOfStream, string.Empty, 43),
+                ]
+            ),
+        ];
+
         // Escaped characters in strings
         yield return
         [

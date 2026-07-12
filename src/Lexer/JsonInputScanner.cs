@@ -1,6 +1,7 @@
 using System.Text;
 using JsonParser.App.TokenModel;
 using JsonParser.App.Lexer.Exceptions;
+using System.Globalization;
 
 namespace JsonParser.App.Lexer;
 
@@ -46,15 +47,6 @@ public sealed class JsonInputScanner
                 InputBuffer = content,
             },
         };
-
-    private bool MoveNext(Context context)
-    {
-        context.Cursor.CurrentCharacter = context.Cursor.CurrentPosition >= context.Cursor.InputBuffer?.Length - 1
-            ? null
-            : context.Cursor.InputBuffer?[++context.Cursor.CurrentPosition];
-
-        return context.Cursor.CurrentCharacter is not null;
-    }
 
     private void ScanNextToken(Context context)
     {
@@ -167,9 +159,47 @@ public sealed class JsonInputScanner
                 context.LexemeBuffer.Append(currentCharacter);
                 break;
 
+            case 'u':
+                ReadUnicodeEscapeSequence(context);
+                break;
+
             default:
                 throw new JsonInputScannerException($"Unknown escape character encountered at position: {tokenStartIndex + 1}. Received character: {currentCharacter}");
         }
+    }
+
+    private void ReadUnicodeEscapeSequence(Context context)
+    {
+        var tokenStartIndex = context.Cursor.CurrentPosition + 1;
+
+        if (!MoveNext(context))
+        {
+            throw new JsonInputScannerException($"Input terminated after position: {tokenStartIndex} in middle of an unicode escape sequence!");
+        }
+
+        tokenStartIndex = context.Cursor.CurrentPosition + 1;
+
+        int unicodeLength = 4;
+        var unicodeSequenceEndPosition = context.Cursor.CurrentPosition + unicodeLength;
+        if (unicodeSequenceEndPosition > context.Cursor.InputBuffer!.Length)
+        {
+            throw new JsonInputScannerException($"Input terminated after position: {tokenStartIndex} in middle of an unicode escape sequence!");
+        }
+
+        var unicodeSequence = context.Cursor.InputBuffer[context.Cursor.CurrentPosition..unicodeSequenceEndPosition];
+        if (!HasAllHexCharacters(unicodeSequence))
+        {
+            throw new JsonInputScannerException($"Unknown unicode escape sequence encountered at position: {tokenStartIndex + 1}. Received unicode sequence: {unicodeSequence}");
+        }
+
+        if (!int.TryParse(unicodeSequence, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out int codePoint))
+        {
+            throw new JsonInputScannerException($"Couldn't determine the unicode escape sequence at position: {tokenStartIndex + 1}. Received unicode sequence: {unicodeSequence}");
+        }
+
+        context.LexemeBuffer.Append((char)codePoint);
+
+        SkipCharactersAhead(context, 3);
     }
 
     private void ReadIdentifier(Context context)
@@ -210,6 +240,22 @@ public sealed class JsonInputScanner
 
     private bool IsSymbolOrWhitespace(char? character) => IsSymbol(character) || (character is char c && char.IsWhiteSpace(c));
 
+    private bool HasAllHexCharacters(string slice)
+    {
+        foreach (var c in slice)
+        {
+            if (!((c >= '0' && c <= '9') ||
+                (c >= 'a' && c <= 'z') ||
+                (c >= 'A' && c <= 'Z'))
+            )
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     private bool IsNumberTerminator(char? character)
         => IsSymbol(character)
             || (character is char c && char.IsWhiteSpace(c))
@@ -230,6 +276,28 @@ public sealed class JsonInputScanner
     {
         Emit(context, tokenType, value, tokenStartIndex);
         MoveNext(context);
+    }
+
+    private bool MoveNext(Context context)
+    {
+        context.Cursor.CurrentCharacter = context.Cursor.CurrentPosition >= context.Cursor.InputBuffer?.Length - 1
+            ? null
+            : context.Cursor.InputBuffer?[++context.Cursor.CurrentPosition];
+
+        return context.Cursor.CurrentCharacter is not null;
+    }
+
+    private bool SkipCharactersAhead(Context context, int total = 1)
+    {
+        for (int i = 0; i < total; i++)
+        {
+            if (!MoveNext(context))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private void ValidateLexerInvariant(Context context)
