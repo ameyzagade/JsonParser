@@ -26,7 +26,7 @@ public sealed class JsonInputScanner
         Context context = IntializeContext(content);
 
         // Start reading the input buffer
-        MoveNext(context);
+        Move(context);
 
         while (context.Cursor!.CurrentCharacter != null)
         {
@@ -55,7 +55,7 @@ public sealed class JsonInputScanner
 
         if (currentCharacter is char c && char.IsWhiteSpace(c))
         {
-            MoveNext(context);
+            Move(context);
             return;
         }
 
@@ -109,7 +109,7 @@ public sealed class JsonInputScanner
     {
         var tokenStartIndex = context.Cursor.CurrentPosition + 1;
 
-        if (!MoveNext(context))
+        if (!Move(context))
         {
             throw new JsonInputScannerException($"Input terminated after position: {tokenStartIndex} without an ending double quote!");
         }
@@ -122,7 +122,7 @@ public sealed class JsonInputScanner
                 // since the string started with a double quote ",
                 // this is the matching double quote to end the string
                 EmitBufferedToken(context, TokenType.String, tokenStartIndex);
-                MoveNext(context);
+                Move(context);
                 break;
             }
 
@@ -133,24 +133,27 @@ public sealed class JsonInputScanner
             else
             {
                 context.LexemeBuffer.Append(character);
+
+                if (!Move(context))
+                {
+                    // if there are no more characters in the input buffer, then stop reading further
+                    throw new JsonInputScannerException($"Input terminated after position: {tokenStartIndex} without an ending double quote!");
+                }
             }
         }
     }
 
     private void ReadEscapeCharacter(Context context)
     {
-        var tokenStartIndex = context.Cursor.CurrentPosition + 1;
-
-        if (!MoveNext(context))
+        if (!Move(context))
         {
-            throw new JsonInputScannerException($"Input terminated after position: {tokenStartIndex} in middle of an escape sequence!");
+            throw new JsonInputScannerException($"Input terminated after position: {context.Cursor.CurrentPosition + 1} in middle of an escape sequence!");
         }
 
-        char? currentCharacter = context.Cursor.CurrentCharacter;
-        switch (currentCharacter)
+        switch (context.Cursor.CurrentCharacter)
         {
             case '"' or '\\' or '/' or 'b' or 'f' or 'n' or 'r' or 't':
-                context.LexemeBuffer.Append(currentCharacter);
+                ReadNormalEscapeCharacter(context);
                 break;
 
             case 'u':
@@ -158,17 +161,26 @@ public sealed class JsonInputScanner
                 break;
 
             default:
-                throw new JsonInputScannerException($"Unknown escape character encountered at position: {tokenStartIndex + 1}. Received character: {currentCharacter}");
+                throw new JsonInputScannerException($"Unknown escape character encountered at position: {context.Cursor.CurrentPosition + 1}. Received character: {context.Cursor.CurrentCharacter}");
+        }
+    }
+
+    private void ReadNormalEscapeCharacter(Context context)
+    {
+        context.LexemeBuffer.Append(context.Cursor.CurrentCharacter);
+
+        if (!Move(context))
+        {
+            // if there are no more characters in the input buffer, then stop reading further
+            throw new JsonInputScannerException($"Input terminated after position: {context.Cursor.CurrentPosition + 1} without an ending double quote!");
         }
     }
 
     private void ReadUnicodeEscapeSequence(Context context)
     {
-        var tokenStartIndex = context.Cursor.CurrentPosition + 1;
-
-        if (!MoveNext(context))
+        if (!Move(context))
         {
-            throw new JsonInputScannerException($"Input terminated after position: {tokenStartIndex} in middle of an unicode escape sequence!");
+            throw new JsonInputScannerException($"Input terminated after position: {context.Cursor.CurrentPosition + 1} in middle of an unicode escape sequence!");
         }
 
         string unicodeSequence = GetUnicodeSequence(context);
@@ -177,7 +189,11 @@ public sealed class JsonInputScanner
 
         context.LexemeBuffer.Append((char)codepoint);
 
-        SkipCharacter(context, 3);
+        if (!Move(context, 4))
+        {
+            // if there are no more characters in the input buffer, then stop reading further
+            throw new JsonInputScannerException($"Input terminated after position: {context.Cursor.CurrentPosition + 1} without an ending double quote!");
+        }
     }
 
     private string GetUnicodeSequence(Context context)
@@ -227,7 +243,7 @@ public sealed class JsonInputScanner
         {
             context.LexemeBuffer.Append(context.Cursor.CurrentCharacter);
 
-            if (!MoveNext(context))
+            if (!Move(context))
             {
                 // if there are no more characters in the input buffer, then stop reading further and flush the lexeme buffer
                 EmitBufferedToken(context, expectedTokenType, tokenStartIndex);
@@ -282,29 +298,19 @@ public sealed class JsonInputScanner
     private void EmitAndAdvance(Context context, TokenType tokenType, string value, int tokenStartIndex)
     {
         Emit(context, tokenType, value, tokenStartIndex);
-        MoveNext(context);
+        Move(context);
     }
 
-    private bool MoveNext(Context context)
+    private bool Move(Context context, int totalNumberOfCharacters = 1)
     {
-        context.Cursor.CurrentCharacter = context.Cursor.CurrentPosition >= context.Cursor.InputBuffer?.Length - 1
-            ? null
-            : context.Cursor.InputBuffer?[++context.Cursor.CurrentPosition];
-
-        return context.Cursor.CurrentCharacter is not null;
-    }
-
-    private bool SkipCharacter(Context context, int total = 1)
-    {
-        for (int i = 0; i < total; i++)
+        for (int i = 0; i < totalNumberOfCharacters; i++)
         {
-            if (!MoveNext(context))
-            {
-                return false;
-            }
+            context.Cursor.CurrentCharacter = context.Cursor.CurrentPosition >= context.Cursor.InputBuffer?.Length - 1
+                                                ? null
+                                                : context.Cursor.InputBuffer?[++context.Cursor.CurrentPosition];
         }
 
-        return true;
+        return context.Cursor.CurrentCharacter is not null;
     }
 
     private void ValidateLexerInvariant(Context context)
