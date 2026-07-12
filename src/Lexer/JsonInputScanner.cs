@@ -134,12 +134,6 @@ public sealed class JsonInputScanner
             {
                 context.LexemeBuffer.Append(character);
             }
-
-            if (!MoveNext(context))
-            {
-                // if there are no more characters in the input buffer, then stop reading further
-                throw new JsonInputScannerException($"Input terminated after position: {tokenStartIndex} without an ending double quote!");
-            }
         }
     }
 
@@ -258,8 +252,8 @@ public sealed class JsonInputScanner
         foreach (var c in slice)
         {
             if (!((c >= '0' && c <= '9') ||
-                (c >= 'a' && c <= 'z') ||
-                (c >= 'A' && c <= 'Z'))
+                (c >= 'a' && c <= 'f') ||
+                (c >= 'A' && c <= 'F'))
             )
             {
                 return false;
