@@ -13,9 +13,13 @@ h4 +0, -0, 01, +23, '22,', 3., .3, 2.3.3, f, f5, e5, E-10, 3f10 3.f-5, 3e-10, 3.
 
 
 h3 Lexical analysis:
-p Start reading when you see a - (minus) or 0 or anything between 1-9
-  Then expect anything between 1-9 or a period (.)
-  Then expect anything between 0-9 or an e or E
-  Then expect a +(plus) or - (minus) or anything between 0-9
-  After any point if you encounter a EOF, throw exception
-
+p 
+  - Start reading a number when you see a - (minus) or 0 or anything between 1-9
+  - After e or E, expect + or -
+  - After -, expect anything between 0-9
+  - After +, expect anything between 0-9
+  - After 0, expect a . or end of input
+  - After 1-9, expect anything between 0-9, zero or more times
+  - After ., expect anything between 0-9, one or more times
+  - If at any point, end of input is encountered, then return error
+  - If at any point, expected value is not encountered, stop reading further
