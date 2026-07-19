@@ -22,6 +22,15 @@ public sealed class JsonInputScanner
         _output = new LexerOutput();
     }
 
+    /// <summary>
+    /// Scans the input JSON string and returns an immutable array of tokens.
+    /// </summary>
+    /// <param name="content">
+    /// The input JSON string to be scanned. It must not be null or empty.
+    /// </param>
+    /// <returns>
+    /// An immutable array of tokens representing the scanned JSON input.
+    /// </returns>
     public static ImmutableArray<Token> Scan(in string content)
         => new JsonInputScanner(content).Tokenize();
 

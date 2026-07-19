@@ -77,11 +77,6 @@ public sealed class CustomJsonParser
     {
         ValidateExpectedToken(context, TokenType.Number);
 
-        if (!double.TryParse(context.CursorState.CurrentToken!.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out var _))
-        {
-            throw new CustomJsonParserException($"Number is in a incorrect format at position: {context.CursorState.CurrentToken.StartIndex}. Received {context.CursorState.CurrentToken.Value}.");
-        }
-
         MoveNext(context);
     }
 
