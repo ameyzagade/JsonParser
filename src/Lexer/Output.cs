@@ -1,12 +1,13 @@
 using System.Text;
+using JsonParser.App.Lexer.Exceptions;
 using JsonParser.App.TokenModel;
 
 namespace JsonParser.App.Lexer;
 
 public sealed class Output
 {
-    public StringBuilder LexemeBuffer { get; private set; }
-    public List<Token> GeneratedTokens { get; private set; }
+    public StringBuilder LexemeBuffer { get; }
+    public List<Token> GeneratedTokens { get; }
 
     public Output()
     {
@@ -23,5 +24,13 @@ public sealed class Output
         Emit(tokenType, value, tokenStartIndex);
 
         LexemeBuffer.Clear();
+    }
+
+    public void AssertInvariant()
+    {
+        if (LexemeBuffer.Length > 0)
+        {
+            throw new InvalidOperationException($"End of input while reading token: {LexemeBuffer}");
+        }
     }
 }

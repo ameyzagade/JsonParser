@@ -1,4 +1,3 @@
-using System.Text;
 using JsonParser.App.TokenModel;
 using JsonParser.App.Lexer.Exceptions;
 using System.Globalization;
@@ -48,12 +47,6 @@ public sealed class JsonInputScanner
         }
 
         // Every Read*() below identifies and emits a token and stops the cursor at next unconsumed character
-        if (IsNumberStart(currentCharacter!.Value))
-        {
-            ReadNumber(context);
-            return;
-        }
-
         switch (context.Cursor.CurrentCharacter)
         {
             case '{':
@@ -95,13 +88,106 @@ public sealed class JsonInputScanner
             case 'n':
                 ReadIdentifier(context);
                 return;
+
+            case '-' or '0' or '1' or '2' or '3' or '4' or '5' or '6' or '7' or '8' or '9':
+                ReadNumber(context);
+                break;
         }
 
         ReadInvalidToken(context);
     }
 
     private void ReadNumber(Context context)
-        => ReadToken(context, TokenType.Number, character => !IsNumberTerminator(character!.Value));
+    {
+        var tokenStartIndex = context.Cursor.CurrentOneBasedPosition;
+
+        // JSON number: -? integer fraction? exponent?
+        if (context.Cursor.CurrentCharacter == '-')
+        {
+            AppendCurrentAndAdvance(context);
+        }
+
+        ReadUnsignedInteger(context);
+        if (context.Cursor.CurrentCharacter is char commaChar &&
+            commaChar == '.')
+        {
+            ReadFraction(context);
+        }
+
+        if (context.Cursor.CurrentCharacter is char exponentSignChar &&
+            (exponentSignChar == 'e' || exponentSignChar == 'E'))
+        {
+            ReadExponent(context);
+        }
+
+        context.Output.EmitBufferedToken(TokenType.Number, tokenStartIndex);
+    }
+
+    private void ReadUnsignedInteger(Context context)
+    {
+        if (context.Cursor.CurrentCharacter == '0')
+        {
+            var tokenStartIndex = context.Cursor.CurrentOneBasedPosition;
+
+            AppendCurrentAndAdvance(context);
+            if (context.Cursor.CurrentCharacter is char c &&
+                char.IsDigit(c))
+            {
+                throw new JsonInputScannerException($"Leading zeros are not permitted. Received '0{c}' at position {tokenStartIndex}.");
+            }
+        }
+        else
+        {
+            ReadDigits(context);
+        }
+    }
+
+    private void ReadFraction(Context context)
+    {
+        AppendCurrentAndAdvance(context);
+        ReadDigits(context);
+    }
+
+    private void ReadExponent(Context context)
+    {
+        AppendCurrentAndAdvance(context);
+        if (context.Cursor.CurrentCharacter is null)
+        {
+            throw new JsonInputScannerException($"Expected either [0-9] digits or + (plus) or - (minus) after e or E (exponential sign) at position {context.Cursor.CurrentOneBasedPosition}, but reached the end of input.");
+        }
+
+        if (context.Cursor.CurrentCharacter == '-' ||
+            context.Cursor.CurrentCharacter == '+')
+        {
+            AppendCurrentAndAdvance(context);
+        }
+
+        ReadDigits(context);
+    }
+
+    private void ReadDigits(Context context)
+    {
+        if (context.Cursor.CurrentCharacter is not char c)
+        {
+            throw new JsonInputScannerException($"Expected [0-9] (digit) at position {context.Cursor.CurrentOneBasedPosition}, but reached the end of input.");
+        }
+
+        if (!char.IsDigit(c))
+        {
+            throw new JsonInputScannerException($"Expected [0-9] (digit) at position {context.Cursor.CurrentOneBasedPosition}, but received '{c}'.");
+        }
+
+        while (context.Cursor.CurrentCharacter is char ch &&
+                char.IsDigit(ch))
+        {
+            context.Output.LexemeBuffer.Append(ch);
+
+            if (!context.Cursor.Advance())
+            {
+                break;
+            }
+        }
+    }
 
     private void ReadString(Context context)
     {
@@ -284,6 +370,12 @@ public sealed class JsonInputScanner
         context.Cursor.Advance();
     }
 
+    private void AppendCurrentAndAdvance(Context context)
+    {
+        context.Output.LexemeBuffer.Append(context.Cursor.CurrentCharacter);
+        context.Cursor.Advance();
+    }
+
     private bool IsSymbol(char? value) => value is '{' or '}' or '[' or ']' or ',' or ':' or '"';
 
     private bool IsNumberStart(char value) => value == '-' ||
@@ -296,16 +388,5 @@ public sealed class JsonInputScanner
     private bool IsSymbolOrWhitespace(char? character) => IsSymbol(character) ||
                                                           (character is char c && char.IsWhiteSpace(c));
 
-    private bool IsNumberTerminator(char character)
-        => IsSymbol(character) ||
-            (character is char c && char.IsWhiteSpace(c)) ||
-            char.IsAsciiLetter(character);
-
-    private void ValidateLexerInvariant(Context context)
-    {
-        if (context.Output.LexemeBuffer.Length > 0)
-        {
-            throw new JsonInputScannerException($"Ended of input at position: {context.Cursor.CurrentOneBasedPosition} while reading token: {context.Output.LexemeBuffer}");
-        }
-    }
+    private void ValidateLexerInvariant(Context context) => context.Output.AssertInvariant();
 }
