@@ -1,5 +1,5 @@
 1) Improve tests
-2) Parser implements some lexical rules, fix them
+2) Grammar comments
 3) Maybe we can support better user friendly error messages
 4) Add spec
 5) support for highlighting multiple keys
